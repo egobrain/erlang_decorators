@@ -1,0 +1,9 @@
+{application,erlang_decorators,
+             [{description,[]},
+              {vsn,"1"},
+              {registered,[]},
+              {applications,[kernel,stdlib]},
+              {mod,{erlang_decorators_app,[]}},
+              {env,[]},
+              {modules,[decorators,erlang_decorators_app,
+                        erlang_decorators_sup]}]}.
