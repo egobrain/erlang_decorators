@@ -12,7 +12,7 @@ parse_transform(Ast,_Options)->
     Ast2 = lists:flatten(lists:filter(fun(Node)-> Node =/= nil end, ExtendedAst2))
 	++ emit_errors_for_rogue_decorators(RogueDecorators),
     %io:format("~p~n<<<<~n",[Ast2]),
-    io:format("~s~n>>>>~n",[pretty_print(Ast2)]),
+    %io:format("~s~n>>>>~n",[pretty_print(Ast2)]),
     Ast2.
 
 
