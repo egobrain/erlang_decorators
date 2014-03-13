@@ -3,10 +3,23 @@
 
 -export([parse_transform/2, pretty_print/1]).
 
-parse_transform(Ast, _Options)->
+-record(state, {
+          opt,
+          decorators=[]
+         }).
+
+parse_transform(Ast, Options)->
+    DecorateOpt =
+        case lists:keyfind(decorate, 1, Options) of
+            {decorate, DecorateList} ->
+                DecorateList;
+            false ->
+                []
+        end,
     %% io:format("~p~n=======~n", [Ast]),
     %% io:format("~s~n=======~n", [pretty_print(Ast)]),
-    {ExtendedAst2, RogueDecorators} = lists:mapfoldl(fun transform_node/2, [], Ast),
+    {ExtendedAst2, RogueDecorators, _State} =
+        mapfoldl2(fun transform_node/3, [], #state{opt=DecorateOpt}, Ast),
     Ast2 = lists:flatten(lists:filter(fun(Node)-> Node =/= nil end, ExtendedAst2))
         ++ emit_errors_for_rogue_decorators(RogueDecorators),
     %% io:format("~p~n<<<<~n", [Ast2]),
@@ -16,20 +29,37 @@ parse_transform(Ast, _Options)->
 pretty_print(Ast) -> lists:flatten([erl_pp:form(N) || N<-Ast]).
 
 emit_errors_for_rogue_decorators(DecoratorList)->
-    [{error, {Line, erl_parse, ["rogue decorator ", io_lib:format("~p", [D]) ]}} || {attribute, Line, decorate, D} <- DecoratorList].
+    [{error, {Line, erl_parse, ["rogue decorator ", io_lib:format("~p", [D]) ]}}
+     || {attribute, Line, decorate, D} <- DecoratorList].
 
-transform_node(Node={attribute, _Line, decorate, _Decorator}, DecoratorList) ->
-    {nil, [Node | DecoratorList]};
-transform_node(Node={function, _Line, _FuncName, _Arity, _Clauses}, []) ->
-    {Node, []};
-transform_node(Node={function, _Line, _FuncName, _Arity, _Clauses}, DecoratorList) ->
-    {apply_decorators(Node, DecoratorList), []};
-transform_node(Node={eof, _Line}, DecoratorList) ->
-    {[Node | emit_errors_for_rogue_decorators(DecoratorList) ], []};
-transform_node(Node, DecoratorList) ->
-    {Node, DecoratorList}.
+transform_node(Node={attribute, _Line, module, Module}, DecoratorList, #state{opt=DecorateOpt} = State) ->
+    State2 =
+        case lists:keyfind(Module, 1, DecorateOpt) of
+            {_, Decorators} ->
+                State#state{decorators = Decorators};
+            false ->
+                State#state{decorators = []}
+        end,
+    {Node, DecoratorList, State2};
+transform_node(_Node={attribute, _Line, decorate, Decorator}, DecoratorList, State) ->
+    {nil, [Decorator | DecoratorList], State};
+transform_node(Node={function, _Line, FuncName, Arity, _Clauses}, DecoratorList,
+               #state{decorators=Decorators} = State) ->
+    DecoratorList2 =
+        case lists:keyfind({FuncName, Arity}, 1, Decorators) of
+            {_, Decs} ->
+                DecoratorList ++ lists:reverse(Decs);
+            false -> DecoratorList
+        end,
+    {apply_decorators(Node, DecoratorList2), [], State};
+transform_node(Node={eof, _Line}, DecoratorList, State) ->
+    {[Node | emit_errors_for_rogue_decorators(DecoratorList) ], [], State};
+transform_node(Node, DecoratorList, State) ->
+    {Node, DecoratorList, State}.
 
-apply_decorators(Node={function, Line, FuncName, Arity, _Clauses}, DecoratorList) when length(DecoratorList) > 0 ->
+apply_decorators(Node={function, _Line, _FuncName, _Arity, _Clauses}, []) ->
+    Node;
+apply_decorators(Node={function, Line, FuncName, Arity, _Clauses}, DecoratorList) ->
     [
      function_form_original(Node),
      function_form_trampoline(Line, FuncName, Arity, DecoratorList),
@@ -78,7 +108,7 @@ function_forms_decorator_chain(Line, FuncName, Arity, DecoratorList) ->
     NumDecorators = length(DecoratorList),
     DecoratorIndexes = lists:zip(DecoratorList, lists:seq(1, NumDecorators)),
     [ function_form_decorator_chain(Line, FuncName, Arity, D, I)
-      || { {attribute, _, decorate, D}, I} <- DecoratorIndexes ] .
+      || {D, I} <- DecoratorIndexes ].
 
 
 function_form_decorator_chain(Line, FuncName, Arity, DecOptions, DecoratorIndex) ->
@@ -152,3 +182,12 @@ atom_name(Elements) ->
           Elements))).
 arg_names(Arity) ->
     [ atom_name(["Arg", ArgNum]) || ArgNum <- lists:seq(1, Arity)].
+
+mapfoldl2(Fun, State1, State2, List) ->
+    mapfoldl2(Fun, State1, State2, List, []).
+
+mapfoldl2(_Fun, State1, State2, [], Acc) ->
+    {lists:reverse(Acc), State1, State2};
+mapfoldl2(Fun, State1, State2, [H|T], Acc) ->
+    {R, S1, S2} = Fun(H, State1, State2),
+    mapfoldl2(Fun, S1, S2, T, [R|Acc]).

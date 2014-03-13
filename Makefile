@@ -10,9 +10,9 @@ deps:
 eunit:
 	@rm -rf .eunit
 	@mkdir -p .eunit
-	@$(REBAR) skip_deps=true eunit
-	
-test: eunit	
+	@$(REBAR) -C test/test.config skip_deps=true eunit
+
+test: eunit
 
 clean:
 	@$(REBAR) clean skip_deps=true
