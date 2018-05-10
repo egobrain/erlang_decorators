@@ -1,12 +1,16 @@
-{application, erlang_decorators,
- [
-  {description, "Erlang decorators parse_transform library"},
-  {vsn, git},
-  {registered, []},
-  {applications, [
-                  kernel,
-                  stdlib
-                 ]},
-  {mod, { erlang_decorators_app, []}},
-  {env, []}
+{application, erlang_decorators, [
+    {description, "Erlang decorators parse_transform library"},
+    {vsn, git},
+    {registered, []},
+    {applications, [
+        kernel,
+        stdlib
+    ]},
+    {mod, { erlang_decorators_app, []}},
+    {env, []},
+    {maintainers, ["Yakov Kozlov"]},
+    {licenses, ["MIT"]},
+    {links, [
+        {"Github", "https://github.com/egobrain/erlang_decorators"}
+    ]}
  ]}.
