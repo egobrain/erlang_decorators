@@ -35,27 +35,27 @@ it2() -> 2.
 -include_lib("eunit/include/eunit.hrl").
 
 w1_test() ->
-    ?assertEqual(w1(), {wrap, 1}).
+    ?assertEqual({wrap, 1}, w1()).
 
 w2_test() ->
-    ?assertEqual(w2(), {wrap, {wrap, 2}}).
+    ?assertEqual({wrap, {wrap, 2}}, w2()).
 
 t1_test() ->
-    ?assertEqual(t1(), {tag1, 1}).
+    ?assertEqual({tag1, 1}, t1()).
 
 t2_test() ->
-    ?assertEqual(t2(), {tag1, {tag2, 2}}).
+    ?assertEqual({tag1, {tag2, 2}}, t2()).
 
 i1_test() ->
-    ?assertEqual(i1(), {i1, 1}).
+    ?assertEqual({i1, 1}, i1()).
 
 i2_test() ->
-    ?assertEqual(i2(), {i2, {i2, 2}}).
+    ?assertEqual({i2, {i2, 2}}, i2()).
 
 it1_test() ->
-    ?assertEqual(it1(), {{tag1, it1}, 1}).
+    ?assertEqual({{tag1, it1}, 1}, it1()).
 
 it2_test() ->
-    ?assertEqual(it2(), {{tag1, it2}, {{tag2, it2}, 2}}).
+    ?assertEqual({{tag1, it2}, {{tag2, it2}, {{tagW, it2}, 2}}}, it2()).
 
 -endif.

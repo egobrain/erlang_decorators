@@ -1,3 +1,7 @@
+[![Build Status](https://travis-ci.org/egobrain/decimal.png?branch=master)](https://travis-ci.org/egobrain/erlang_decorators.png?branch=master)
+[![Coveralls](https://img.shields.io/coveralls/egobrain/erlang_decorators.svg)](https://coveralls.io/github/egobrain/erlang_decorators)
+[![GitHub tag](https://img.shields.io/github/tag/egobrain/erlang_decorators.svg)](https://github.com/egobrain/erlang_decorators)
+
 erlang_decorators
 =================
 
@@ -44,7 +48,7 @@ Syntax:
     [
      {Module :: module(),
      [
-      {{Fun :: atom(), Arity :: non},
+      {{Fun :: atom(), Arity :: non_neg_integer() | '*'} | '*',
        [DecoratorSpec, ...]},
       ...
      ],

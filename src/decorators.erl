@@ -161,10 +161,7 @@ emit_arguments(Line, AtomList) ->
 emit_values(Line, Args) ->
     [{atom, Line, Arg} || Arg <- Args].
 
-emit_guards(_Line, [])->
-    [];
-emit_guards(_, _)->
-    throw(nyi).
+emit_guards(_Line, []) -> [].
 
 emit_atom_list(Line, AtomList) ->
     lists:foldr(fun(Arg, Acc) ->
@@ -173,8 +170,6 @@ emit_atom_list(Line, AtomList) ->
 
 generated_func_name( {original, OrigName} ) ->
     atom_name([OrigName, "_original___"]);
-generated_func_name( {trampoline, OrigName} ) ->
-    OrigName;
 generated_func_name( {decorator_wrapper, OrigName, Arity, N} ) ->
     atom_name([OrigName, "_arity", Arity, "_", N]).
 
