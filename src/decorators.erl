@@ -45,17 +45,26 @@ transform_node(_Node={attribute, _Line, decorate, Decorator}, DecoratorList, Sta
     {nil, [Decorator | DecoratorList], State};
 transform_node(Node={function, _Line, FuncName, Arity, _Clauses}, DecoratorList,
                #state{decorators=Decorators} = State) ->
-    DecoratorList2 =
-        case lists:keyfind({FuncName, Arity}, 1, Decorators) of
-            {_, Decs} ->
-                DecoratorList ++ lists:reverse(Decs);
-            false -> DecoratorList
-        end,
+    DecoratorList2 = DecoratorList ++ get_ext_decorators(FuncName, Arity, Decorators),
     {apply_decorators(Node, DecoratorList2), [], State};
 transform_node(Node={eof, _Line}, DecoratorList, State) ->
     {[Node | emit_errors_for_rogue_decorators(DecoratorList) ], [], State};
 transform_node(Node, DecoratorList, State) ->
     {Node, DecoratorList, State}.
+
+get_ext_decorators(FuncName, Arity, DecoratorList) ->
+    get_ext_decorators_(FuncName, Arity, DecoratorList, []).
+
+get_ext_decorators_(_FuncName, _Arity, [], Acc) ->
+    lists:append(Acc);
+get_ext_decorators_(FuncName, Arity, [{{FuncName, Arity}, Decorators}|Rest], Acc) ->
+    get_ext_decorators_(FuncName, Arity, Rest, [lists:reverse(Decorators)|Acc]);
+get_ext_decorators_(FuncName, Arity, [{{FuncName, '*'}, Decorators}|Rest], Acc) ->
+    get_ext_decorators_(FuncName, Arity, Rest, [lists:reverse(Decorators)|Acc]);
+get_ext_decorators_(FuncName, Arity, [{'*', Decorators}|Rest], Acc) ->
+    get_ext_decorators_(FuncName, Arity, Rest, [lists:reverse(Decorators)|Acc]);
+get_ext_decorators_(FuncName, Arity, [_|Rest], Acc) ->
+    get_ext_decorators_(FuncName, Arity, Rest, Acc).
 
 apply_decorators(Node={function, _Line, _FuncName, _Arity, _Clauses}, []) ->
     Node;
